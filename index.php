@@ -7,7 +7,120 @@
         <link rel="stylesheet" href="src/css/styles.css">
         <link rel="icon" type="image/x-icon" href="src/img/logo.png">
     </head>
-    <body>
+        <body>
+            <?php
+                function test_input($data) {
+                    $data = trim($data);
+                    $data = stripslashes($data);
+                    $data = htmlspecialchars($data);
+                    return $data;
+                }
+
+                $validated = true ;
+
+                $fnameErr = $lnameErr = $emailErr = $phoneErr = $subjectErr = $messageErr = "";
+
+                $fname = $lname = $email = $phone =  $subject = $message = "";
+
+
+               if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                    if (empty($_POST["fname"])) {
+                        $fnameErr = "First Name is required";
+                        $validated = false;
+                    } else {
+                        $fname = test_input($_POST["fname"]);
+                       
+                        if (!preg_match("/^[a-zA-Z-' ]*$/",$fname)) {
+                            $fnameErr = "Only letters and white space allowed";
+                            $validated = false;
+                        }
+                    }
+                    if (empty($_POST["lname"])) {
+                        $lnameErr = "Last Name is required";
+                        $validated = false;
+                    } else {
+                        $lname = test_input($_POST["lname"]);
+                       
+                        if (!preg_match("/^[a-zA-Z-' ]*$/",$lname)) {
+                            $lnameErr = "Only letters and white space allowed";
+                            $validated = false;
+                        }
+                    }
+                    
+                    if (empty($_POST["email"])) {
+                        $emailErr = "Email is required";
+                        $validated = false;
+                    } else {
+                        $email = test_input($_POST["email"]);
+                       
+                        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                            $emailErr = "Invalid email format";
+                            $validated = false;
+                        }
+                    }
+
+                    if (empty($_POST["phone"])) {
+                        $phoneErr = "Phone Number is required";
+                        $validated = false;
+                    } else {
+                        $phone = test_input($_POST["phone"]);
+                       
+                        if (!preg_match('/^[0-9]*$/', $phone)) {
+                            $phoneErr = "Invalid phone number";
+                            $validated = false;
+                        }
+                    }
+                    
+                    if (empty($_POST["subject"])) {
+                        $subjectErr = "Subject is required";
+                        $validated = false;
+                    } else {
+                        $sublect = test_input($_POST["subject"]);
+                       
+                    }
+                    if (empty($_POST["message"])) {
+                        $messageErr = "Message is required";
+                        $validated = false;
+                    } else {
+                        $message = test_input($_POST["message"]);
+                       
+                    }
+
+                    if($validated){
+                        $host = "localhost";
+                        $username = "root";
+                        $password = "";
+                        $db = "db_portfolio";
+
+                        $conn = new mysqli($host,$username,$password,$db);
+                        if($conn->connect_error){
+                            echo "$conn->connect_error";
+                            echo '<script>alert("Error Occured...")</script>';
+                            echo '<script type="text/javascript">
+                            window.location = "index.php"
+                            </script>';
+                        } else {
+                            $stmt = $conn->prepare("insert into tbl_contacts(fname,lname, email, phone,subject,message) values(?, ?, ?, ?,?,?)");
+                            $stmt->bind_param("ssssss", $fname, $lname, $email, $phone,$subject,$message);
+                            $execval = $stmt->execute();
+                            echo '<script>alert("Thank you for contacting us..")</script>';
+                            echo '<script type="text/javascript">
+                            window.location = "index.php"
+                            </script>';
+                            $stmt->close();
+                            $conn->close();
+                    }
+                    }else{
+                        echo '<script type="text/javascript">
+                        window.location = "index.php#contactForm"
+                        </script>';
+                    }
+                
+                }
+                
+                
+                
+        ?>
         <img src="src/img/arrow-up.png" alt="" id="btnTop" class="btn-top">
         <div class="side-nav">
             <a href="#contactForm"><img src="src/img/phone.png" alt=""></a>
@@ -164,18 +277,38 @@
 
         <section id="contactForm" class="section-contact" >
             <h2 class="header">Let's Build a Thing</h2>
-            <form id="formContact" method="post" action="">
+            <form id="formContact" method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
                 <div class="form-line">
-                    <input type="text" id="fname" placeholder="First Name">
-                    <input type="text" id="lname" placeholder="Last Name">
+                    <input type="text" id="fname" name="fname" placeholder="First Name">
+                    <input type="text" id="lname" name="lname" placeholder="Last Name">
+                    
                 </div>
                 <div class="form-line">
-                    <input type="email" id="email" placeholder="Email">
-                    <input type="tel" id="phone" placeholder="Phone">
+                    <table>
+                        <tr>
+                            <td><span class="error"><?php echo $fnameErr;?></span></td>
+                            <td><span class="error"><?php echo $lnameErr;?></span></td>
+                        </tr>
+                    </table>
                 </div>
-                <input type="text" id="subject" placeholder="Subject">
-                <textarea id="message" placeholder="Message"></textarea>
-                <input id="btnnn" type="button" value="Submit">
+                <div class="form-line">
+                    <input type="email" id="email" name="email" placeholder="Email">
+                    <input type="tel" id="phone" name="phone" placeholder="Phone">
+                </div>
+                <div class="form-line">
+                <table>
+                        <tr>
+                            <td><span class="error"><?php echo $emailErr;?></span></td>
+                            <td><span class="error"><?php echo $phoneErr;?></span></span></td>
+                        </tr>
+                    </table>
+                    
+                </div>
+                <input type="text" id="subject" name="subject" placeholder="Subject">
+                <span class="error"><?php echo $subjectErr;?></span>
+                <textarea id="message" name="message" placeholder="Message"></textarea>
+                <span class="error"><?php echo $messageErr;?></span>
+                <input id="btnnn" type="submit" name="submit "value="Submit">
                 
             </form>
         </section>
